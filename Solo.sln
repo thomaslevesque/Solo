@@ -1,8 +1,12 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Solo", "Solo\Solo.csproj", "{4788F7D9-F902-4EEF-B416-34BD271A1B91}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Solo", "src\Solo\Solo.csproj", "{4788F7D9-F902-4EEF-B416-34BD271A1B91}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestApp", "TestApp\TestApp.csproj", "{86C463AB-BBDF-42EF-A1FB-D5FDD5E68438}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestApp", "tests\TestApp\TestApp.csproj", "{86C463AB-BBDF-42EF-A1FB-D5FDD5E68438}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{6923879A-05AF-4C10-A931-8C148E796B41}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{FD751C8D-4E21-4799-AAC7-91A59EB9E94C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -18,5 +22,9 @@ Global
 		{86C463AB-BBDF-42EF-A1FB-D5FDD5E68438}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{86C463AB-BBDF-42EF-A1FB-D5FDD5E68438}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{86C463AB-BBDF-42EF-A1FB-D5FDD5E68438}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{4788F7D9-F902-4EEF-B416-34BD271A1B91} = {6923879A-05AF-4C10-A931-8C148E796B41}
+		{86C463AB-BBDF-42EF-A1FB-D5FDD5E68438} = {FD751C8D-4E21-4799-AAC7-91A59EB9E94C}
 	EndGlobalSection
 EndGlobal

@@ -8,7 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Solo\Solo.csproj" />
+      <ProjectReference Include="..\..\src\Solo\Solo.csproj" />
     </ItemGroup>
 
 </Project>
