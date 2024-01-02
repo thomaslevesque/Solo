@@ -2,5 +2,5 @@
 .idea/
 bin/
 obj/
+artifacts/
 *.user
-

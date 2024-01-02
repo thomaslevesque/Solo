@@ -8,6 +8,18 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{6923879A-05A
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{FD751C8D-4E21-4799-AAC7-91A59EB9E94C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "build", "tools\build\build.csproj", "{5472BBA9-36C2-4BC5-8588-B712964F9DB4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{1547F2DE-F5C5-48D6-BB56-A2754A90819F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_", "_", "{C48F2723-E3E8-4A88-BE00-5F5EC8BC8110}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		build.ps1 = build.ps1
+		LICENSE = LICENSE
+		README.md = README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -22,9 +34,14 @@ Global
 		{86C463AB-BBDF-42EF-A1FB-D5FDD5E68438}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{86C463AB-BBDF-42EF-A1FB-D5FDD5E68438}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{86C463AB-BBDF-42EF-A1FB-D5FDD5E68438}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5472BBA9-36C2-4BC5-8588-B712964F9DB4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5472BBA9-36C2-4BC5-8588-B712964F9DB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5472BBA9-36C2-4BC5-8588-B712964F9DB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5472BBA9-36C2-4BC5-8588-B712964F9DB4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{4788F7D9-F902-4EEF-B416-34BD271A1B91} = {6923879A-05AF-4C10-A931-8C148E796B41}
 		{86C463AB-BBDF-42EF-A1FB-D5FDD5E68438} = {FD751C8D-4E21-4799-AAC7-91A59EB9E94C}
+		{5472BBA9-36C2-4BC5-8588-B712964F9DB4} = {1547F2DE-F5C5-48D6-BB56-A2754A90819F}
 	EndGlobalSection
 EndGlobal
