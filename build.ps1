@@ -1,1 +1,1 @@
-dotnet run --project "$PSScriptRoot\tools\build\build.csproj" -- @Args
+dotnet run --project "$PSScriptRoot/tools/build/build.csproj" -- @Args
