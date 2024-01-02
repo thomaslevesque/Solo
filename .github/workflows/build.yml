@@ -19,6 +19,7 @@ jobs:
         name: package
         path: artifacts/packages/*.nupkg
     - name: Upload build log
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: build-log
