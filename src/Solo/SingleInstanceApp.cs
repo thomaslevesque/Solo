@@ -1,5 +1,7 @@
 ﻿using System.IO.Pipes;
+using System.Runtime.InteropServices;
 using System.Text.Json;
+using Microsoft.Win32.SafeHandles;
 
 namespace Solo;
 
@@ -48,8 +50,8 @@ public class SingleInstanceApp : IDisposable
             }
             catch (IOException)
             {
-                Log("Another instance is already running. Sending args to existing instance.");
-                SendArgs(args);
+                Log("Another instance is already running. Activating existing instance.");
+                ActivateExistingInstance(args);
                 return false;
             }
         }
@@ -95,21 +97,51 @@ public class SingleInstanceApp : IDisposable
         }
     }
 
-    private void SendArgs(string[]? args)
+    private void ActivateExistingInstance(string[]? args)
     {
         try
         {
             using var clientStream = new NamedPipeClientStream(".", _pipeName, PipeDirection.Out);
             clientStream.Connect(TimeSpan.FromSeconds(5));
+
+            AllowExistingInstanceToSetForegroundWindow(clientStream.SafePipeHandle);
+
             using var writer = new StreamWriter(clientStream);
             writer.Write(JsonSerializer.Serialize(args ?? []));
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             Log($"Failed to send args to existing instance: {ex}");
         }
     }
-    
+
+    private void AllowExistingInstanceToSetForegroundWindow(SafePipeHandle pipeHandle)
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            // On Windows, there are pretty strict rules about whether an application can make itself
+            // the foreground application. Since the existing instance isn't in the foreground, we
+            // need to allow it to make itself the foreground app, otherwise the browser will stay in
+            // the background, leading to a poor user experience.
+            if (GetNamedPipeServerProcessId(pipeHandle, out uint processId))
+            {
+                Log("Successfully obtained named pipe server process id");
+                if (AllowSetForegroundWindow(processId))
+                {
+                    Log("Successfully allowed existing instance to make itself the foreground app");
+                }
+                else
+                {
+                    Log("Failed to allow existing instance to make itself the foreground app");
+                }
+            }
+            else
+            {
+                Log("Failed to obtain named pipe server process id");
+            }
+        }
+    }
+
     private void Log(string message) => _log?.Invoke(message);
 
     public void Dispose()
@@ -121,4 +153,10 @@ public class SingleInstanceApp : IDisposable
         _serverStream?.Dispose();
         _serverStream = null;
     }
+
+    [DllImport("kernel32")]
+    private static extern bool GetNamedPipeServerProcessId(SafeHandle pipeHandle, out uint serverProcessId);
+
+    [DllImport("user32")]
+    private static extern bool AllowSetForegroundWindow(uint processId);
 }
