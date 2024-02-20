@@ -1,5 +1,8 @@
 # Solo
 
+> [!WARNING]
+> This library is a work in progress, and might not work as intended. In particular, it hasn't been tested _at all_ on Linux yet.
+
 A simple library to run a .NET app as single-instance and notify the existing instance, if any.
 
 When the first instance of the app starts, it attempts to create a named pipe.
