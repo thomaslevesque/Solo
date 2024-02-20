@@ -6,6 +6,8 @@ When the first instance of the app starts, it attempts to create a named pipe.
 - If the named pipe already exists, it means another instance of the app already exists. Solo then connects to the existing named pipe, and sends the arguments to the existing instance, so that it can react appropriately.
 - If it doesn't, the app can start normally. Solo waits for connections from other instances to receive their arguments.
 
+Additionally, on Windows only, the new instance allows the existing instance to set the foreground window. This is necessary because of the [rules](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setforegroundwindow#remarks) to prevent windows from stealing focus: without this, the existing instance could react when a new instance is started, but it would stay in the background, which would lead to a poor user experience.
+
 ## Getting started
 
 Install the package, and add this at the beginning of your `Main` method (or directly in `Program.cs`, if using top-level statements):
