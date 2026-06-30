@@ -23,7 +23,7 @@ public sealed class SingleInstanceApp : IDisposable
     {
         ValidateAppId(appId);
         _onNewInstance = onNewInstance;
-        _pipeName = $"{appId}-Pipe";
+        _pipeName = GetPipeName(appId);
         _log = log;
     }
 
@@ -177,6 +177,45 @@ public sealed class SingleInstanceApp : IDisposable
                 or '_';
     }
 
+    private static string GetPipeName(string appId)
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            return $"{appId}-SoloPipe";
+        }
+
+        // On Unix-like systems, named pipes are implemented with Unix domain sockets. The path to the socket file has
+        // a max length of 104 characters (macOS) or 108 (Linux), and by default, it creates the socket file in the
+        // temporary folder. It's usually OK on Linux, but on macOS, the temp folder path is per user and can be pretty
+        // long, which limits the available length for appId.
+        // To avoid this, we specify a full path to the socket file in a folder that is guaranteed to be short enough.
+        // On Linux, we can use the XDG_RUNTIME_DIR environment variable, which is usually set to /run/user/<uid>, which
+        // is short enough. On macOS, and on Linux if XDG_RUNTIME_DIR is not set, we can use /tmp, which is also short
+        // enough. We also prefix the socket file name with the user ID to avoid conflicts between users on the same
+        // machine.
+
+        if (OperatingSystem.IsLinux())
+        {
+            string? xdgRuntimeDir = Environment.GetEnvironmentVariable("XDG_RUNTIME_DIR");
+            if (!string.IsNullOrWhiteSpace(xdgRuntimeDir))
+            {
+                return Path.Combine(xdgRuntimeDir, $"{appId}-SoloPipe");
+            }
+        }
+
+        return $"/tmp/{GetUnixUserId()}-{appId}-SoloPipe";
+    }
+
+    private static uint GetUnixUserId()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            throw new PlatformNotSupportedException();
+        }
+
+        return getuid();
+    }
+
     private void Log(string message) => _log?.Invoke(message);
 
     public void Dispose()
@@ -194,4 +233,7 @@ public sealed class SingleInstanceApp : IDisposable
 
     [DllImport("user32")]
     private static extern bool AllowSetForegroundWindow(uint processId);
+
+    [DllImport("libc")]
+    private static extern uint getuid();
 }
