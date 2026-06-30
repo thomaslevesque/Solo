@@ -31,13 +31,20 @@ Target(
         $"build -c \"{commandLineOptions.Configuration}\" /bl:\"{buildLogFile}\" \"{solutionFile}\""));
 
 Target(
+    "test",
+    DependsOn("build"),
+    () => Run(
+        "dotnet",
+        $"test -c \"{commandLineOptions.Configuration}\" --no-build \"{solutionFile}\""));
+
+Target(
     "pack",
     DependsOn("artifactDirectories", "build"),
     () => Run(
         "dotnet",
         $"pack -c \"{commandLineOptions.Configuration}\" --no-build -o \"{packagesDir}\" \"{libraryProject}\""));
 
-Target("default", DependsOn("pack"));
+Target("default", DependsOn("test", "pack"));
 
 if (commandLineOptions.ShowHelp)
 {

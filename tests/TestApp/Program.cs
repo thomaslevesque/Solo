@@ -1,9 +1,9 @@
-﻿// See https://aka.ms/new-console-template for more information
+﻿using Solo;
 
-using Solo;
+string appId = Environment.GetEnvironmentVariable("SOLO_TEST_APP_ID") ?? "MyTestApp";
 
 using var singleInstanceApp = SingleInstanceAppBuilder
-    .WithId("MyTestApp")
+    .WithId(appId)
     .OnNewInstance(args =>
     {
         Console.WriteLine("New instance started with args:");
