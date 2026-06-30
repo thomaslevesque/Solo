@@ -8,7 +8,7 @@ public class TestAppIntegrationTests
     public async Task StartingSecondProcess_NotifiesFirstProcess()
     {
         string testAppDll = ResolveTestAppDllPath();
-        string appId = $"solo-integration-{Guid.NewGuid():N}";
+        string appId = CreateTestAppId();
 
         var firstStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var receivedOneArg = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -135,6 +135,12 @@ public class TestAppIntegrationTests
         };
         escapedArgs.AddRange(args.Select(Quote));
         return string.Join(' ', escapedArgs);
+    }
+
+    private static string CreateTestAppId()
+    {
+        string suffix = Guid.NewGuid().ToString("N")[..8];
+        return $"i-{suffix}";
     }
 
     private static string Quote(string value) => $"\"{value.Replace("\"", "\\\"", StringComparison.Ordinal)}\"";

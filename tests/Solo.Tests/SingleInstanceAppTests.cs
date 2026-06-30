@@ -14,7 +14,7 @@ public class SingleInstanceAppTests
     [Fact]
     public void Build_ThrowsForTooLongAppId()
     {
-        string appId = new('a', 101);
+        string appId = new('a', 65);
 
         var ex = Assert.Throws<ArgumentException>(() => SingleInstanceAppBuilder.WithId(appId).Build());
         Assert.Equal("appId", ex.ParamName);
@@ -47,7 +47,7 @@ public class SingleInstanceAppTests
     [Fact]
     public void TryStart_ThrowsWhenCalledTwiceOnSameInstance()
     {
-        string appId = $"solo-tests-{Guid.NewGuid():N}";
+        string appId = CreateTestAppId();
         using var app = SingleInstanceAppBuilder.WithId(appId).Build();
 
         Assert.True(app.TryStart(["first-instance"]));
@@ -57,7 +57,7 @@ public class SingleInstanceAppTests
     [Fact]
     public async Task TryStart_SecondInstanceNotifiesFirstInstance()
     {
-        string appId = $"solo-tests-{Guid.NewGuid():N}";
+        string appId = CreateTestAppId();
         var receivedArgs = new TaskCompletionSource<string[]>(TaskCreationOptions.RunContinuationsAsynchronously);
         using var firstInstance = SingleInstanceAppBuilder
             .WithId(appId)
@@ -70,5 +70,11 @@ public class SingleInstanceAppTests
 
         string[] args = await receivedArgs.Task.WaitAsync(TimeSpan.FromSeconds(5));
         Assert.Equal(["one", "two"], args);
+    }
+
+    private static string CreateTestAppId()
+    {
+        string suffix = Guid.NewGuid().ToString("N")[..8];
+        return $"t-{suffix}";
     }
 }
