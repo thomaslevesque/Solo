@@ -16,9 +16,10 @@ Additionally, on Windows only, the new instance allows the existing instance to 
 Install the package, and add this at the beginning of your `Main` method (or directly in `Program.cs`, if using top-level statements):
 
 ```csharp
-using var singleInstanceApp = new SingleInstanceApp(
-    "MyTestApp",
-    args => Console.WriteLine("New instance started!"));
+using var singleInstanceApp = SingleInstanceAppBuilder
+    .WithId("MyTestApp")
+    .OnNewInstance(args => Console.WriteLine("New instance started!"))
+    .Build();
 if (!singleInstanceApp.TryStart(args))
 {
     return;
@@ -27,7 +28,7 @@ if (!singleInstanceApp.TryStart(args))
 // The rest of your code goes here
 ```
 
-The delegate passed to the `SingleInstanceApp` constructor is invoked when another instance of the app is started.
+The delegate passed to `OnNewInstance` is invoked when another instance of the app is started.
 
 If another instance is already running but Solo fails to activate it, `TryStart` throws an `ExistingInstanceActivationException`.
 

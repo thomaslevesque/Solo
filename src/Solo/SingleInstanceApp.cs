@@ -5,7 +5,7 @@ using Microsoft.Win32.SafeHandles;
 
 namespace Solo;
 
-public class SingleInstanceApp : IDisposable
+public sealed class SingleInstanceApp : IDisposable
 {
     private const int MaxAppIdLength = 100;
     private readonly object _syncLock = new();
@@ -16,10 +16,10 @@ public class SingleInstanceApp : IDisposable
     private NamedPipeServerStream? _serverStream;
     private CancellationTokenSource? _cancellationTokenSource;
 
-    public SingleInstanceApp(
+    internal SingleInstanceApp(
         string appId,
-        Action<string[]>? onNewInstance = null,
-        Action<string>? log = null)
+        Action<string[]>? onNewInstance,
+        Action<string>? log)
     {
         ValidateAppId(appId);
         _onNewInstance = onNewInstance;

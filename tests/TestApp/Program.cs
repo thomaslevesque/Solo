@@ -2,17 +2,18 @@
 
 using Solo;
 
-using var singleInstanceApp = new SingleInstanceApp(
-    "MyTestApp",
-    args =>
+using var singleInstanceApp = SingleInstanceAppBuilder
+    .WithId("MyTestApp")
+    .OnNewInstance(args =>
     {
         Console.WriteLine("New instance started with args:");
         foreach (var arg in args)
         {
             Console.WriteLine($"- {arg}");
         }
-    },
-    message => Console.WriteLine($"[SingleInstanceApp]: {message}"));
+    })
+    .OnLogMessage(message => Console.WriteLine($"[SingleInstanceApp]: {message}"))
+    .Build();
 
 if (!singleInstanceApp.TryStart(args))
 {
