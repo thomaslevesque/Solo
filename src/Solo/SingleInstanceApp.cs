@@ -41,7 +41,7 @@ public class SingleInstanceApp : IDisposable
                     PipeDirection.In,
                     1,
                     PipeTransmissionMode.Byte,
-                    PipeOptions.FirstPipeInstance | PipeOptions.Asynchronous);
+                    PipeOptions.FirstPipeInstance | PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
                 Log("Successfully created named pipe server, listening for connections.");
 
                 var cts = _cancellationTokenSource = new CancellationTokenSource();
