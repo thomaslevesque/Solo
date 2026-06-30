@@ -48,12 +48,12 @@ public class SingleInstanceApp : IDisposable
                 Task.Run(() => RunServerAsync(cts.Token), cts.Token);
                 return true;
             }
-            catch (IOException)
-            {
-                Log("Another instance is already running. Activating existing instance.");
-                ActivateExistingInstance(args);
-                return false;
-            }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+
+            Log("Another instance is already running. Activating existing instance.");
+            ActivateExistingInstance(args);
+            return false;
         }
     }
 
