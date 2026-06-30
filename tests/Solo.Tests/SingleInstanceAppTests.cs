@@ -20,6 +20,15 @@ public class SingleInstanceAppTests
         Assert.Equal("appId", ex.ParamName);
     }
 
+    [Fact]
+    public void Build_AllowsMaxLengthAppId()
+    {
+        string appId = new('a', 64);
+
+        using var app = SingleInstanceAppBuilder.WithId(appId).Build();
+        Assert.NotNull(app);
+    }
+
     [Theory]
     [InlineData("app id")]
     [InlineData("app.id")]
