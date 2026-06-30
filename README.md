@@ -32,4 +32,4 @@ The delegate passed to `OnNewInstance` is invoked when another instance of the a
 
 If another instance is already running but Solo fails to activate it, `TryStart` throws an `ExistingInstanceActivationException`.
 
-`appId` may only contain ASCII letters, digits, `-` and `_`, and must not exceed 100 characters.
+`appId` may only contain ASCII letters, digits, `-` and `_`, and must not exceed 64 characters.

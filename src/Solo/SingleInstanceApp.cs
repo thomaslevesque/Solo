@@ -7,7 +7,7 @@ namespace Solo;
 
 public sealed class SingleInstanceApp : IDisposable
 {
-    private const int MaxAppIdLength = 100;
+    private const int MaxAppIdLength = 64;
     private readonly object _syncLock = new();
     private readonly string _pipeName;
     private readonly Action<string>? _log;
