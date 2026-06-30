@@ -28,3 +28,5 @@ if (!singleInstanceApp.TryStart(args))
 ```
 
 The delegate passed to the `SingleInstanceApp` constructor is invoked when another instance of the app is started.
+
+If another instance is already running but Solo fails to activate it, `TryStart` throws an `ExistingInstanceActivationException`.

@@ -108,10 +108,14 @@ public class SingleInstanceApp : IDisposable
 
             using var writer = new StreamWriter(clientStream);
             writer.Write(JsonSerializer.Serialize(args ?? []));
+            writer.Flush();
         }
         catch (Exception ex)
         {
             Log($"Failed to send args to existing instance: {ex}");
+            throw new ExistingInstanceActivationException(
+                "Another instance is already running, but failed to activate it.",
+                ex);
         }
     }
 
