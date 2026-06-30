@@ -7,6 +7,7 @@ namespace Solo;
 
 public class SingleInstanceApp : IDisposable
 {
+    private const int MaxAppIdLength = 100;
     private readonly object _syncLock = new();
     private readonly string _pipeName;
     private readonly Action<string>? _log;
@@ -20,6 +21,7 @@ public class SingleInstanceApp : IDisposable
         Action<string[]>? onNewInstance = null,
         Action<string>? log = null)
     {
+        ValidateAppId(appId);
         _onNewInstance = onNewInstance;
         _pipeName = $"{appId}-Pipe";
         _log = log;
@@ -144,6 +146,35 @@ public class SingleInstanceApp : IDisposable
                 Log("Failed to obtain named pipe server process id");
             }
         }
+    }
+
+    private static void ValidateAppId(string appId)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(appId);
+
+        if (appId.Length > MaxAppIdLength)
+        {
+            throw new ArgumentException(
+                $"The app ID must not exceed {MaxAppIdLength} characters.",
+                nameof(appId));
+        }
+
+        foreach (char c in appId)
+        {
+            if (!IsAllowedAppIdCharacter(c))
+            {
+                throw new ArgumentException(
+                    "The app ID may only contain ASCII letters, digits, '-' and '_'.",
+                    nameof(appId));
+            }
+        }
+
+        static bool IsAllowedAppIdCharacter(char c) =>
+            c is >= 'A' and <= 'Z'
+                or >= 'a' and <= 'z'
+                or >= '0' and <= '9'
+                or '-'
+                or '_';
     }
 
     private void Log(string message) => _log?.Invoke(message);
