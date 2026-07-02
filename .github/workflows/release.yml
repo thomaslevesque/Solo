@@ -20,8 +20,8 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: build-artifacts
-          path: /tmp/artifacts
+          name: packages
+          path: /tmp/artifacts/packages
       - name: NuGet login
         uses: NuGet/login@v1
         id: nuget-login
