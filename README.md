@@ -1,19 +1,20 @@
 # Solo
 
-> [!WARNING]
-> This library is a work in progress, and might not work as intended. In particular, it hasn't been tested _at all_ on Linux yet.
+[![NuGet version](https://img.shields.io/nuget/vpre/Solo.svg?logo=nuget)](https://www.nuget.org/packages/Solo/absoluteLatest)
 
-A simple library to run a .NET app as single-instance and notify the existing instance, if any.
+A simple library to run a .NET app as a single instance and notify the existing instance if any.
+It works on Windows, Linux and macOS.
 
-When the first instance of the app starts, it attempts to create a named pipe.
-- If the named pipe already exists, it means another instance of the app already exists. Solo then connects to the existing named pipe, and sends the arguments to the existing instance, so that it can react appropriately.
-- If it doesn't, the app can start normally. Solo waits for connections from other instances to receive their arguments.
+The first instance of the app starts normally and listens for new instances in the background. When a new instance
+starts, it sends its arguments to the existing instance, which can react appropriately, then exits.
 
-Additionally, on Windows only, the new instance allows the existing instance to set the foreground window. This is necessary because of the [rules](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setforegroundwindow#remarks) to prevent windows from stealing focus: without this, the existing instance could react when a new instance is started, but it would stay in the background, which would lead to a poor user experience.
+Note: the single instance behavior only applies within the same user session. Different users are still able to run the
+same app at the same time.
 
 ## Getting started
 
-Install the package, and add this at the beginning of your `Main` method (or directly in `Program.cs`, if using top-level statements):
+Install the package, and add the following at the beginning of your `Main` method (or directly in `Program.cs`, if using
+top-level statements):
 
 ```csharp
 using var singleInstanceApp = SingleInstanceAppBuilder
@@ -30,6 +31,20 @@ if (!singleInstanceApp.TryStart(args))
 
 The delegate passed to `OnNewInstance` is invoked when another instance of the app is started.
 
-If another instance is already running but Solo fails to activate it, `TryStart` throws an `ExistingInstanceActivationException`.
+`TryStart` returns `true` if the app is the first instance and is able to start, and `false` if another instance is
+already running. If another instance is already running but Solo fails to activate it, `TryStart` throws an
+`ExistingInstanceActivationException`.
 
 `appId` may only contain ASCII letters, digits, `-` and `_`, and must not exceed 64 characters.
+
+## How it works
+
+When the first instance of the app starts, Solo attempts to create a named pipe.
+- If the named pipe already exists, it means another instance of the app is already running. Solo then connects to the
+  existing named pipe, and sends the arguments to the existing instance, so that it can react appropriately.
+- If it doesn't, the app can start normally. Solo waits for connections from other instances to receive their arguments.
+
+Additionally, on Windows, the new instance allows the existing instance to set the foreground window. This is
+necessary because of the [rules](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setforegroundwindow#remarks)
+to prevent apps from stealing focus: without this, the existing instance could react when a new instance is started, but
+it would stay in the background, which would lead to a poor user experience.
