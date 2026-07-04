@@ -78,18 +78,18 @@ public class SingleInstanceAppTests
     public async Task TryStart_SecondInstanceNotifiesFirstInstance()
     {
         string appId = CreateTestAppId();
-        var receivedArgs = new TaskCompletionSource<string[]>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var receivedContext = new TaskCompletionSource<NewInstanceStartedContext>(TaskCreationOptions.RunContinuationsAsynchronously);
         using var firstInstance = SingleInstanceAppBuilder
             .WithId(appId)
-            .OnNewInstance(args => receivedArgs.TrySetResult(args))
+            .OnNewInstance(context => receivedContext.TrySetResult(context))
             .Build();
         using var secondInstance = SingleInstanceAppBuilder.WithId(appId).Build();
 
         Assert.True(firstInstance.TryStart(["first"]));
         Assert.False(secondInstance.TryStart(["one", "two"]));
 
-        string[] args = await receivedArgs.Task.WaitAsync(TimeSpan.FromSeconds(5));
-        Assert.Equal(["one", "two"], args);
+        NewInstanceStartedContext context = await receivedContext.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.Equal(["one", "two"], context.Args);
     }
 
     private static string CreateTestAppId()

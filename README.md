@@ -19,7 +19,8 @@ top-level statements):
 ```csharp
 using var singleInstanceApp = SingleInstanceAppBuilder
     .WithId("MyTestApp")
-    .OnNewInstance(args => Console.WriteLine("New instance started!"))
+    .OnNewInstance(context =>
+        Console.WriteLine($"New instance started with args:\n{string.Join("\n", context.Args)}"))
     .Build();
 if (!singleInstanceApp.TryStart(args))
 {
@@ -29,7 +30,8 @@ if (!singleInstanceApp.TryStart(args))
 // The rest of your code goes here
 ```
 
-The delegate passed to `OnNewInstance` is invoked when another instance of the app is started.
+The delegate passed to `OnNewInstance` is invoked when another instance of the app is started, and receives
+a `NewInstanceStartedContext` containing the command line arguments.
 
 `TryStart` returns `true` if the app is the first instance and is able to start, and `false` if another instance is
 already running. If another instance is already running but Solo fails to activate it, `TryStart` throws an

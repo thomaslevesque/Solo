@@ -11,14 +11,14 @@ public sealed class SingleInstanceApp : IDisposable
     private readonly object _syncLock = new();
     private readonly string _pipeName;
     private readonly Action<string>? _log;
-    private readonly Action<string[]>? _onNewInstance;
+    private readonly Action<NewInstanceStartedContext>? _onNewInstance;
 
     private NamedPipeServerStream? _serverStream;
     private CancellationTokenSource? _cancellationTokenSource;
 
     internal SingleInstanceApp(
         string appId,
-        Action<string[]>? onNewInstance,
+        Action<NewInstanceStartedContext>? onNewInstance,
         Action<string>? log)
     {
         ValidateAppId(appId);
@@ -68,20 +68,20 @@ public sealed class SingleInstanceApp : IDisposable
                 await _serverStream!.WaitForConnectionAsync(cancellationToken);
                 try
                 {
-                    Log("Received named pipe connection, trying to read args.");
+                    Log("Received named pipe connection, trying to read activation payload.");
                     using var reader = new StreamReader(_serverStream, leaveOpen: true);
                     var json = await reader.ReadToEndAsync(cancellationToken);
                     Log($"Received JSON: {json}");
-                    string[] args = JsonSerializer.Deserialize<string[]>(json)!;
-                    _onNewInstance?.Invoke(args);
+                    var payload = JsonSerializer.Deserialize<ActivationPayload>(json)!;
+                    _onNewInstance?.Invoke(payload.ToNewInstanceStartedContext());
                 }
                 catch (JsonException ex)
                 {
-                    Log($"Failed to deserialize args from JSON: {ex}");
+                    Log($"Failed to deserialize activation payload from JSON: {ex}");
                 }
                 catch (Exception ex)
                 {
-                    Log($"Error while receiving args: {ex}");
+                    Log($"Error while receiving activation payload: {ex}");
                 }
                 finally
                 {
@@ -109,7 +109,11 @@ public sealed class SingleInstanceApp : IDisposable
             AllowExistingInstanceToSetForegroundWindow(clientStream.SafePipeHandle);
 
             using var writer = new StreamWriter(clientStream);
-            writer.Write(JsonSerializer.Serialize(args ?? []));
+            var payload = new ActivationPayload
+            {
+                Args = args ?? []
+            };
+            writer.Write(JsonSerializer.Serialize(payload));
             writer.Flush();
         }
         catch (Exception ex)
@@ -164,7 +168,7 @@ public sealed class SingleInstanceApp : IDisposable
             if (!IsAllowedAppIdCharacter(c))
             {
                 throw new ArgumentException(
-                    "The app ID may only contain ASCII letters, digits, '-' and '_'.",
+                    "The app ID may only contain ASCII letters, digits, '-', '_' and '.'.",
                     nameof(appId));
             }
         }
@@ -239,4 +243,11 @@ public sealed class SingleInstanceApp : IDisposable
 
     [DllImport("libc")]
     private static extern uint getuid();
+
+    private sealed class ActivationPayload
+    {
+        public string[] Args { get; set; } = [];
+
+        public NewInstanceStartedContext ToNewInstanceStartedContext() => new(Args);
+    }
 }

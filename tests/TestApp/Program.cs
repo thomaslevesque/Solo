@@ -4,10 +4,11 @@ string appId = Environment.GetEnvironmentVariable("SOLO_TEST_APP_ID") ?? "MyTest
 
 using var singleInstanceApp = SingleInstanceAppBuilder
     .WithId(appId)
-    .OnNewInstance(args =>
+    .OnNewInstance(context =>
     {
+
         Console.WriteLine("New instance started with args:");
-        foreach (var arg in args)
+        foreach (var arg in context.Args)
         {
             Console.WriteLine($"- {arg}");
         }

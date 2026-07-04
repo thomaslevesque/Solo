@@ -3,7 +3,7 @@ namespace Solo;
 public sealed class SingleInstanceAppBuilder
 {
     private readonly string _appId;
-    private Action<string[]>? _onNewInstance;
+    private Action<NewInstanceStartedContext>? _onNewInstance;
     private Action<string>? _onLogMessage;
 
     private SingleInstanceAppBuilder(string appId)
@@ -16,7 +16,7 @@ public sealed class SingleInstanceAppBuilder
         return new SingleInstanceAppBuilder(appId);
     }
 
-    public SingleInstanceAppBuilder OnNewInstance(Action<string[]> onNewInstance)
+    public SingleInstanceAppBuilder OnNewInstance(Action<NewInstanceStartedContext> onNewInstance)
     {
         ArgumentNullException.ThrowIfNull(onNewInstance);
         _onNewInstance = onNewInstance;
