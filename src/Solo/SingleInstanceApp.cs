@@ -180,9 +180,11 @@ public sealed class SingleInstanceApp : IDisposable
 
     private static string GetPipeName(string appId)
     {
+        const string pipeNameSuffix = ".SoloPipe";
+
         if (OperatingSystem.IsWindows())
         {
-            return $"{appId}-SoloPipe";
+            return $"{appId}{pipeNameSuffix}";
         }
 
         // On Unix-like systems, named pipes are implemented with Unix domain sockets. The path to the socket file has
@@ -200,11 +202,11 @@ public sealed class SingleInstanceApp : IDisposable
             string? xdgRuntimeDir = Environment.GetEnvironmentVariable("XDG_RUNTIME_DIR");
             if (!string.IsNullOrWhiteSpace(xdgRuntimeDir))
             {
-                return Path.Combine(xdgRuntimeDir, $"{appId}-SoloPipe");
+                return Path.Combine(xdgRuntimeDir, $"{appId}{pipeNameSuffix}");
             }
         }
 
-        return $"/tmp/{GetUnixUserId()}-{appId}-SoloPipe";
+        return $"/tmp/{GetUnixUserId()}-{appId}{pipeNameSuffix}";
     }
 
     private static uint GetUnixUserId()
