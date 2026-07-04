@@ -174,7 +174,8 @@ public sealed class SingleInstanceApp : IDisposable
                 or >= 'a' and <= 'z'
                 or >= '0' and <= '9'
                 or '-'
-                or '_';
+                or '_'
+                or '.';
     }
 
     private static string GetPipeName(string appId)

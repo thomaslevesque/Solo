@@ -31,7 +31,6 @@ public class SingleInstanceAppTests
 
     [Theory]
     [InlineData("app id")]
-    [InlineData("app.id")]
     [InlineData("é")]
     public void Build_ThrowsForInvalidAppIdCharacters(string appId)
     {
@@ -39,6 +38,18 @@ public class SingleInstanceAppTests
 
         Assert.Equal("appId", ex.ParamName);
         Assert.Contains("ASCII letters", ex.Message);
+    }
+
+    [Theory]
+    [InlineData("app")]
+    [InlineData("app.id")]
+    [InlineData("app_id")]
+    [InlineData("app-id")]
+    [InlineData("App123.v2")]
+    public void Build_AllowsValidAppIdNames(string appId)
+    {
+        using var app = SingleInstanceAppBuilder.WithId(appId).Build();
+        Assert.NotNull(app);
     }
 
     [Fact]
