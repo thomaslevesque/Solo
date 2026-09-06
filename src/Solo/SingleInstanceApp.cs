@@ -1,6 +1,7 @@
 ﻿using System.IO.Pipes;
 using System.Runtime.InteropServices;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Win32.SafeHandles;
 
 namespace Solo;
@@ -72,7 +73,9 @@ public sealed class SingleInstanceApp : IDisposable
                     using var reader = new StreamReader(_serverStream, leaveOpen: true);
                     var json = await reader.ReadToEndAsync(cancellationToken);
                     Log($"Received JSON: {json}");
-                    var payload = JsonSerializer.Deserialize<ActivationPayload>(json)!;
+                    var payload = JsonSerializer.Deserialize(
+                        json,
+                        ActivationPayloadJsonSerializerContext.Default.ActivationPayload)!;
                     _onNewInstance?.Invoke(payload.ToNewInstanceStartedContext());
                 }
                 catch (JsonException ex)
@@ -113,7 +116,9 @@ public sealed class SingleInstanceApp : IDisposable
             {
                 Args = args ?? []
             };
-            writer.Write(JsonSerializer.Serialize(payload));
+            writer.Write(JsonSerializer.Serialize(
+                payload,
+                ActivationPayloadJsonSerializerContext.Default.ActivationPayload));
             writer.Flush();
         }
         catch (Exception ex)
@@ -244,10 +249,13 @@ public sealed class SingleInstanceApp : IDisposable
     [DllImport("libc")]
     private static extern uint getuid();
 
-    private sealed class ActivationPayload
+    internal sealed class ActivationPayload
     {
         public string[] Args { get; set; } = [];
 
         public NewInstanceStartedContext ToNewInstanceStartedContext() => new(Args);
     }
 }
+
+[JsonSerializable(typeof(SingleInstanceApp.ActivationPayload))]
+internal partial class ActivationPayloadJsonSerializerContext : JsonSerializerContext;
