@@ -46,6 +46,9 @@ When the first instance of the app starts, Solo attempts to create a named pipe.
   existing named pipe, and sends the arguments to the existing instance, so that it can react appropriately.
 - If it doesn't, the app can start normally. Solo waits for connections from other instances to receive their arguments.
 
+On Unix-like systems, an app terminated abruptly can leave its domain socket file behind. If the existing socket does
+not accept a connection within 500 ms, Solo removes the stale socket and retries startup once.
+
 Additionally, on Windows, the new instance allows the existing instance to set the foreground window. This is
 necessary because of the [rules](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setforegroundwindow#remarks)
 to prevent apps from stealing focus: without this, the existing instance could react when a new instance is started, but
