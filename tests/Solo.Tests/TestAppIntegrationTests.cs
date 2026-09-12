@@ -46,6 +46,74 @@ public class TestAppIntegrationTests
         }
     }
 
+    [Fact]
+    public async Task StartingAfterPreviousProcessIsKilled_RecoversFromStaleUnixSocket()
+    {
+        if (!OperatingSystem.IsLinux())
+        {
+            return;
+        }
+
+        string testAppDll = ResolveTestAppDllPath();
+        string appId = CreateTestAppId();
+        var firstStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var secondStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        using var firstProcess = CreateTestAppProcess(testAppDll, appId);
+        AttachStartedSignal(firstProcess, firstStarted);
+        firstProcess.Start();
+        firstProcess.BeginOutputReadLine();
+        firstProcess.BeginErrorReadLine();
+
+        try
+        {
+            await firstStarted.Task.WaitAsync(TimeSpan.FromSeconds(10));
+
+            firstProcess.Kill(entireProcessTree: true);
+            await firstProcess.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(10));
+
+            using var secondProcess = CreateTestAppProcess(testAppDll, appId);
+            AttachStartedSignal(secondProcess, secondStarted);
+            secondProcess.Start();
+            secondProcess.BeginOutputReadLine();
+            secondProcess.BeginErrorReadLine();
+
+            try
+            {
+                await secondStarted.Task.WaitAsync(TimeSpan.FromSeconds(10));
+                Assert.False(secondProcess.HasExited);
+            }
+            finally
+            {
+                if (!secondProcess.HasExited)
+                {
+                    await secondProcess.StandardInput.WriteLineAsync();
+                    await secondProcess.StandardInput.FlushAsync();
+                    await WaitForExitOrKillAsync(secondProcess, TimeSpan.FromSeconds(5));
+                }
+            }
+        }
+        finally
+        {
+            if (!firstProcess.HasExited)
+            {
+                firstProcess.Kill(entireProcessTree: true);
+                await firstProcess.WaitForExitAsync();
+            }
+        }
+    }
+
+    private static void AttachStartedSignal(Process process, TaskCompletionSource started)
+    {
+        process.OutputDataReceived += (_, e) =>
+        {
+            if (e.Data?.Contains("Started as single instance with args:", StringComparison.Ordinal) == true)
+            {
+                started.TrySetResult();
+            }
+        };
+    }
+
     private static Process CreateTestAppProcess(string testAppDllPath, string appId, params string[] args)
     {
         var startInfo = new ProcessStartInfo

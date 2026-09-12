@@ -1,5 +1,3 @@
-using System.Net.Sockets;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Solo;
 
@@ -94,48 +92,9 @@ public class SingleInstanceAppTests
         Assert.Equal(["one", "two"], context.Args);
     }
 
-    [Fact]
-    public void TryStart_RemovesStaleUnixSocket()
-    {
-        if (!OperatingSystem.IsLinux())
-        {
-            return;
-        }
-
-        string appId = CreateTestAppId();
-        string socketPath = GetUnixSocketPath(appId);
-        try
-        {
-            using (var socket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified))
-            {
-                socket.Bind(new UnixDomainSocketEndPoint(socketPath));
-                socket.Listen(1);
-            }
-
-            using var app = SingleInstanceAppBuilder.WithId(appId).Build();
-
-            Assert.True(app.TryStart([]));
-        }
-        finally
-        {
-            File.Delete(socketPath);
-        }
-    }
-
     private static string CreateTestAppId()
     {
         string suffix = Guid.NewGuid().ToString("N")[..8];
         return $"t-{suffix}";
     }
-
-    private static string GetUnixSocketPath(string appId)
-    {
-        string? xdgRuntimeDir = Environment.GetEnvironmentVariable("XDG_RUNTIME_DIR");
-        return !string.IsNullOrWhiteSpace(xdgRuntimeDir)
-            ? Path.Combine(xdgRuntimeDir, $"{appId}.SoloPipe")
-            : $"/tmp/{getuid()}-{appId}.SoloPipe";
-    }
-
-    [DllImport("libc")]
-    private static extern uint getuid();
 }
