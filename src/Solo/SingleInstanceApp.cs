@@ -9,6 +9,9 @@ namespace Solo;
 public sealed class SingleInstanceApp : IDisposable
 {
     private const int MaxAppIdLength = 64;
+    private static readonly TimeSpan ExistingInstanceActivationTimeout = OperatingSystem.IsWindows()
+        ? TimeSpan.FromSeconds(5)
+        : TimeSpan.FromMilliseconds(500);
     private readonly object _syncLock = new();
     private readonly string _pipeName;
     private readonly Action<string>? _log;
@@ -37,25 +40,54 @@ public sealed class SingleInstanceApp : IDisposable
                 throw new InvalidOperationException("SingleInstanceApp already started.");
             }
 
-            try
+            if (TryCreateServer())
             {
-                _serverStream = new NamedPipeServerStream(
-                    _pipeName,
-                    PipeDirection.In,
-                    1,
-                    PipeTransmissionMode.Byte,
-                    PipeOptions.FirstPipeInstance | PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
-                Log("Successfully created named pipe server, listening for connections.");
-
-                var cts = _cancellationTokenSource = new CancellationTokenSource();
-                Task.Run(() => RunServerAsync(cts.Token), cts.Token);
                 return true;
             }
-            catch (IOException) { }
-            catch (UnauthorizedAccessException) { }
 
             Log("Another instance is already running. Activating existing instance.");
-            ActivateExistingInstance(args);
+            try
+            {
+                ActivateExistingInstance(args);
+                return false;
+            }
+            catch (ExistingInstanceActivationException ex) when (TryRemoveStaleUnixSocket(ex))
+            {
+                Log("Removed stale named pipe socket. Retrying server creation.");
+                if (TryCreateServer())
+                {
+                    return true;
+                }
+
+                Log("Another instance is already running. Activating existing instance.");
+                ActivateExistingInstance(args);
+                return false;
+            }
+        }
+    }
+
+    private bool TryCreateServer()
+    {
+        try
+        {
+            _serverStream = new NamedPipeServerStream(
+                _pipeName,
+                PipeDirection.In,
+                1,
+                PipeTransmissionMode.Byte,
+                PipeOptions.FirstPipeInstance | PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
+            Log("Successfully created named pipe server, listening for connections.");
+
+            var cts = _cancellationTokenSource = new CancellationTokenSource();
+            Task.Run(() => RunServerAsync(cts.Token), cts.Token);
+            return true;
+        }
+        catch (IOException)
+        {
+            return false;
+        }
+        catch (UnauthorizedAccessException)
+        {
             return false;
         }
     }
@@ -107,7 +139,7 @@ public sealed class SingleInstanceApp : IDisposable
         try
         {
             using var clientStream = new NamedPipeClientStream(".", _pipeName, PipeDirection.Out);
-            clientStream.Connect(TimeSpan.FromSeconds(5));
+            clientStream.Connect(ExistingInstanceActivationTimeout);
 
             AllowExistingInstanceToSetForegroundWindow(clientStream.SafePipeHandle);
 
@@ -128,6 +160,43 @@ public sealed class SingleInstanceApp : IDisposable
                 "Another instance is already running, but failed to activate it.",
                 ex);
         }
+    }
+
+    private bool TryRemoveStaleUnixSocket(ExistingInstanceActivationException exception)
+    {
+        if (OperatingSystem.IsWindows() || !ContainsTimeoutException(exception))
+        {
+            return false;
+        }
+
+        try
+        {
+            File.Delete(_pipeName);
+            return true;
+        }
+        catch (IOException ex)
+        {
+            Log($"Failed to remove stale named pipe socket: {ex}");
+            return false;
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            Log($"Failed to remove stale named pipe socket: {ex}");
+            return false;
+        }
+    }
+
+    private static bool ContainsTimeoutException(Exception exception)
+    {
+        for (Exception? current = exception; current != null; current = current.InnerException)
+        {
+            if (current is TimeoutException)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void AllowExistingInstanceToSetForegroundWindow(SafePipeHandle pipeHandle)
